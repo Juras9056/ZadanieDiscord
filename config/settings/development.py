@@ -11,9 +11,14 @@ DATABASES = {
     }
 }
 
-# In development use in-memory channel layer (no Redis required)
+import os
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [REDIS_URL],
+        },
     }
 }
