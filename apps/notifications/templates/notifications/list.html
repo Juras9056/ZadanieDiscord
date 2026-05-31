@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Powiadomienia{% endblock %}
+
+{% block content %}
+<div class="p-4" style="max-width:600px">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0 fw-bold">Powiadomienia</h4>
+    {% if notifications %}
+      <form method="post" action="{% url 'notifications:mark_all_read' %}">
+        {% csrf_token %}
+        <button class="btn btn-sm btn-outline-secondary">Oznacz wszystkie jako przeczytane</button>
+      </form>
+    {% endif %}
+  </div>
+  <div class="list-group list-group-flush">
+    {% for notif in notifications %}
+      <div class="list-group-item bg-transparent d-flex align-items-start gap-3
+                  {% if not notif.is_read %}border-start border-primary ps-3{% endif %}">
+        <i class="bi bi-{% if notif.notif_type == 'dm' %}chat-dots{% elif notif.notif_type == 'mention' %}at{% else %}bell{% endif %} mt-1 text-primary"></i>
+        <div>
+          <div class="fw-semibold small">{{ notif.title }}</div>
+          {% if notif.message %}<div class="text-muted small">{{ notif.message }}</div>{% endif %}
+          <div class="text-muted" style="font-size:.7rem">{{ notif.created_at|date:"d.m.Y H:i" }}</div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-muted text-center mt-4">Brak powiadomień</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

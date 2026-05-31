@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}🔊 {{ channel.name }}{% endblock %}
+
+{% block navbar_title %}
+  <i class="bi bi-volume-up-fill text-muted me-2"></i>
+  <span class="fw-semibold">{{ channel.name }}</span>
+  <span class="text-muted small border-start border-secondary ps-3 ms-1">{{ server.name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column align-items-center justify-content-center h-100 p-4">
+  <div id="voiceStatus" class="text-center mb-4">
+    <i class="bi bi-mic-mute text-muted" style="font-size:3rem" id="micIcon"></i>
+    <h5 class="mt-2" id="voiceStatusText">Kliknij, aby dołączyć do rozmowy głosowej</h5>
+    <p class="text-muted small">Kanał: <strong>#{{ channel.name }}</strong> · {{ server.name }}</p>
+  </div>
+
+  <!-- Controls -->
+  <div class="d-flex gap-3 mb-4">
+    <button id="joinVoiceBtn" class="btn btn-success btn-lg px-4">
+      <i class="bi bi-telephone-fill me-2"></i>Dołącz
+    </button>
+    <button id="leaveVoiceBtn" class="btn btn-danger btn-lg px-4 d-none">
+      <i class="bi bi-telephone-x-fill me-2"></i>Rozłącz
+    </button>
+    <button id="muteBtn" class="btn btn-secondary btn-lg d-none" title="Wycisz/odcisz">
+      <i class="bi bi-mic-fill"></i>
+    </button>
+  </div>
+
+  <!-- Participants -->
+  <div class="card bg-secondary-subtle border-0 w-100" style="max-width:500px">
+    <div class="card-body">
+      <h6 class="fw-semibold mb-3"><i class="bi bi-people-fill me-2"></i>W kanale głosowym</h6>
+      <div id="participantsList" class="d-flex flex-wrap gap-2">
+        <span class="text-muted small" id="emptyMsg">Brak uczestników</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden audio elements for remote streams -->
+  <div id="remoteAudios"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const VOICE_CHANNEL_ID = {{ channel.id }};
+  const CURRENT_USER = "{{ request.user.username }}";
+</script>
+<script src="{% static 'js/voice.js' %}?v=3"></script>
+{% endblock %}

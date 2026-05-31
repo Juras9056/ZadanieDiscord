@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}#{{ channel.name }}{% endblock %}
+
+{% block navbar_title %}
+  <i class="bi bi-hash text-muted"></i>
+  <span class="fw-semibold">{{ channel.name }}</span>
+  {% if channel.description %}
+    <span class="text-muted small border-start border-secondary ps-3 ms-1">{{ channel.description }}</span>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="chat-layout d-flex flex-column h-100">
+  <!-- Messages -->
+  <div class="messages-container flex-grow-1 overflow-auto p-3" id="messagesContainer">
+    {% for msg in messages_list %}
+      <div class="message d-flex gap-3 mb-3 {% if msg.author == request.user %}own-message{% endif %}"
+           data-msg-id="{{ msg.id }}">
+        <img src="{{ msg.author.profile.get_avatar_url }}" class="rounded-circle flex-shrink-0"
+             width="40" height="40" style="object-fit:cover" />
+        <div>
+          <div class="d-flex align-items-baseline gap-2">
+            <a href="{% url 'users:profile' msg.author.username %}"
+               class="fw-semibold text-decoration-none text-white small">{{ msg.author.username }}</a>
+            <span class="text-muted" style="font-size:.7rem">{{ msg.created_at|date:"H:i" }}</span>
+            {% if is_server_mod or msg.author == request.user %}
+              <form method="post" action="{% url 'moderation:delete_message' msg.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link btn-sm text-danger p-0 ms-1" style="font-size:.7rem">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            {% endif %}
+          </div>
+          <p class="mb-1 small">{{ msg.content }}</p>
+          {% for att in msg.attachments.all %}
+            {% if att.attachment_type == 'image' %}
+              <img src="{{ att.file.url }}" class="img-fluid rounded mt-1" style="max-width:300px" />
+            {% elif att.attachment_type == 'audio' %}
+              <audio controls class="mt-1"><source src="{{ att.file.url }}"></audio>
+            {% else %}
+              <a href="{{ att.file.url }}" class="btn btn-sm btn-outline-secondary mt-1"><i class="bi bi-file-earmark me-1"></i>Pobierz plik</a>
+            {% endif %}
+          {% endfor %}
+          <!-- Reactions -->
+          <div class="reactions d-flex flex-wrap gap-1 mt-1">
+            {% for reaction in msg.reactions.all %}
+              <form method="post" action="{% url 'chat:toggle_reaction' msg.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="emoji" value="{{ reaction.emoji }}" />
+                <button type="submit" class="btn btn-sm reaction-btn">{{ reaction.emoji }}</button>
+              </form>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-center text-muted mt-5">
+        <i class="bi bi-chat-square-dots fs-1 d-block mb-2"></i>
+        To jest początek kanału <strong>#{{ channel.name }}</strong>. Przywitaj się!
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Input bar -->
+  <div class="message-input-bar px-3 py-2 border-top border-secondary">
+    <div class="d-flex gap-2 align-items-center">
+      <!-- File upload -->
+      <label class="btn btn-sm btn-outline-secondary mb-0" title="Dodaj plik">
+        <i class="bi bi-paperclip"></i>
+        <input type="file" id="fileUpload" class="d-none" accept="image/*,audio/*,.pdf,.doc,.docx,.zip" />
+      </label>
+      <!-- Voice recorder -->
+      <button id="voiceBtn" class="btn btn-sm btn-outline-secondary" title="Nagraj wiadomość głosową">
+        <i class="bi bi-mic"></i>
+      </button>
+      <!-- Text input -->
+      <input type="text" id="messageInput" class="form-control bg-secondary-subtle border-0"
+             placeholder="Napisz wiadomość w #{{ channel.name }}..." autocomplete="off" />
+      <!-- Send -->
+      <button id="sendBtn" class="btn btn-primary btn-sm px-3">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </div>
+    <div id="uploadPreview" class="mt-1"></div>
+    <div id="recordingStatus" class="text-danger small mt-1 d-none"><i class="bi bi-record-circle me-1"></i>Nagrywanie...</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const CHANNEL_ID = {{ channel.id }};
+  const CURRENT_USER = "{{ request.user.username }}";
+  const UPLOAD_URL = "{% url 'chat:upload_attachment' %}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'js/chat.js' %}"></script>
+<script src="{% static 'js/voice_recorder.js' %}"></script>
+{% endblock %}

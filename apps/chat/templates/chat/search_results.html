@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Wyniki wyszukiwania{% endblock %}
+
+{% block content %}
+<div class="p-4">
+  <h4 class="mb-4">Wyniki dla: <strong>{{ query }}</strong></h4>
+
+  {% if users %}
+    <h6 class="text-muted text-uppercase mb-2">Użytkownicy</h6>
+    <div class="list-group list-group-flush mb-4">
+      {% for u in users %}
+        <a href="{% url 'users:profile' u.username %}" class="list-group-item list-group-item-action bg-transparent d-flex align-items-center gap-3">
+          <img src="{{ u.profile.get_avatar_url }}" class="rounded-circle" width="32" height="32" style="object-fit:cover" />
+          <span>{{ u.username }}</span>
+          {% if u.is_online %}<span class="badge bg-success ms-auto">Online</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if channels %}
+    <h6 class="text-muted text-uppercase mb-2">Kanały</h6>
+    <div class="list-group list-group-flush">
+      {% for ch in channels %}
+        <a href="{% url 'chat:channel_detail' ch.id %}" class="list-group-item list-group-item-action bg-transparent">
+          <i class="bi bi-hash me-2"></i>{{ ch.name }}
+          <small class="text-muted ms-2">{{ ch.description|truncatechars:60 }}</small>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if not users and not channels %}
+    <p class="text-muted">Brak wyników dla "<em>{{ query }}</em>".</p>
+  {% endif %}
+</div>
+{% endblock %}

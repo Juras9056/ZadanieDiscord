@@ -1,0 +1,37 @@
+{% extends "base_unauth.html" %}
+{% load static %}
+
+{% block title %}Zaloguj się{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper d-flex align-items-center justify-content-center min-vh-100">
+  <div class="auth-card p-5 rounded-4 shadow-lg" style="width:100%;max-width:420px">
+    <div class="text-center mb-4">
+      <img src="{% static 'img/logo.svg' %}" alt="logo" width="56" class="mb-3" />
+      <h2 class="fw-bold">Witaj z powrotem!</h2>
+      <p class="text-muted small">Cieszymy się, że wracasz.</p>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <div class="mb-3">
+          <label class="form-label small fw-semibold text-muted text-uppercase">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <div class="text-danger small mt-1">{{ field.errors.0 }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger p-2 small">{{ form.non_field_errors.0 }}</div>
+      {% endif %}
+      <button type="submit" class="btn btn-primary w-100 mt-2 fw-semibold">Zaloguj się</button>
+    </form>
+
+    <p class="text-center mt-3 small text-muted">
+      Nie masz konta? <a href="{% url 'users:register' %}" class="text-primary">Zarejestruj się</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

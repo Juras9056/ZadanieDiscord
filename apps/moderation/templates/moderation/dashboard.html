@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Panel moderacji{% endblock %}
+
+{% block content %}
+<div class="p-4">
+  <h4 class="fw-bold mb-4"><i class="bi bi-shield-check me-2"></i>Panel moderacji</h4>
+
+  <h5 class="mb-3">Otwarte zgłoszenia ({{ open_reports.count }})</h5>
+  <div class="table-responsive mb-5">
+    <table class="table table-dark table-hover table-sm">
+      <thead><tr><th>Zgłaszający</th><th>Dotyczy</th><th>Powód</th><th>Data</th><th></th></tr></thead>
+      <tbody>
+        {% for report in open_reports %}
+        <tr>
+          <td><a href="{% url 'users:profile' report.reporter.username %}">{{ report.reporter.username }}</a></td>
+          <td>{% if report.reported_user %}<a href="{% url 'users:profile' report.reported_user.username %}">{{ report.reported_user.username }}</a>{% endif %}</td>
+          <td>{{ report.get_reason_display }}</td>
+          <td>{{ report.created_at|date:"d.m.Y H:i" }}</td>
+          <td>
+            <form method="post" action="{% url 'moderation:resolve_report' report.id %}">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-success">Rozwiąż</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-muted text-center">Brak otwartych zgłoszeń</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Członkowie — {{ server.name }}{% endblock %}
+
+{% block navbar_title %}
+  <i class="bi bi-people-fill text-muted me-2"></i>
+  <span class="fw-semibold">Członkowie serwera {{ server.name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width:760px">
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">
+      <span class="badge bg-secondary me-2">{{ memberships|length }}</span>
+      {% if server.channel_type == 'private' %}<i class="bi bi-lock-fill text-warning me-1"></i>{% endif %}
+      {{ server.name }}
+    </h5>
+    <a href="{% url 'chat:server_detail' server.id %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Powrót
+    </a>
+  </div>
+
+  <!-- Legend -->
+  <div class="d-flex gap-3 mb-3 flex-wrap">
+    <span class="badge bg-danger px-2 py-1"><i class="bi bi-shield-fill-check me-1"></i>Administrator</span>
+    <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-shield-half me-1"></i>Moderator</span>
+    <span class="badge bg-secondary px-2 py-1"><i class="bi bi-person-fill me-1"></i>Użytkownik</span>
+  </div>
+
+  <div class="list-group list-group-flush gap-2">
+    {% for mem in memberships %}
+      <div class="list-group-item bg-dark border border-secondary rounded d-flex align-items-center gap-3 px-3 py-2">
+
+        <!-- Avatar -->
+        <img src="{{ mem.user.profile.get_avatar_url }}" class="rounded-circle flex-shrink-0"
+             width="40" height="40" style="object-fit:cover" />
+
+        <!-- Name + role badge -->
+        <div class="flex-grow-1 overflow-hidden">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="fw-semibold small text-truncate">{{ mem.user.username }}</span>
+            {% if mem.role == 'admin' %}
+              <span class="badge bg-danger" style="font-size:.65rem"><i class="bi bi-shield-fill-check me-1"></i>Administrator</span>
+            {% elif mem.role == 'moderator' %}
+              <span class="badge bg-warning text-dark" style="font-size:.65rem"><i class="bi bi-shield-half me-1"></i>Moderator</span>
+            {% else %}
+              <span class="badge bg-secondary" style="font-size:.65rem"><i class="bi bi-person-fill me-1"></i>Użytkownik</span>
+            {% endif %}
+            {% if mem.is_banned %}
+              <span class="badge bg-dark border border-danger text-danger" style="font-size:.65rem"><i class="bi bi-ban me-1"></i>Zbanowany</span>
+            {% endif %}
+          </div>
+          <div class="text-muted" style="font-size:.7rem">{{ mem.user.email }}</div>
+        </div>
+
+        <!-- Actions (not for yourself) -->
+        {% if mem.user != request.user %}
+          <div class="d-flex gap-2 flex-shrink-0 flex-wrap justify-content-end">
+
+            {# Role change — admin only, can't change another admin #}
+            {% if my_mem.role == 'admin' and mem.role != 'admin' %}
+              <form method="post" action="{% url 'chat:set_member_role' server.id mem.user.id %}" class="d-flex gap-1 align-items-center">
+                {% csrf_token %}
+                <select name="role" class="form-select form-select-sm bg-secondary border-0 text-white" style="width:auto;font-size:.75rem">
+                  {% for value, label in role_choices %}
+                    <option value="{{ value }}" {% if mem.role == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-outline-primary" title="Zapisz rolę" style="font-size:.75rem">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              </form>
+            {% endif %}
+
+            {# Ban/unban — admin or mod; can't ban admin or (mod banning mod) #}
+            {% if mem.role != 'admin' %}
+              {% if my_mem.role == 'admin' or mem.role == 'user' %}
+                <form method="post" action="{% url 'chat:ban_member' server.id mem.user.id %}">
+                  {% csrf_token %}
+                  {% if mem.is_banned %}
+                    <button type="submit" class="btn btn-sm btn-outline-success" title="Odbanuj" style="font-size:.75rem">
+                      <i class="bi bi-person-check me-1"></i>Odbanuj
+                    </button>
+                  {% else %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Zbanuj" style="font-size:.75rem">
+                      <i class="bi bi-ban me-1"></i>Banuj
+                    </button>
+                  {% endif %}
+                </form>
+              {% endif %}
+            {% endif %}
+
+          </div>
+        {% else %}
+          <span class="text-muted small">(Ty)</span>
+        {% endif %}
+
+      </div>
+    {% empty %}
+      <div class="text-muted text-center py-4">Brak członków.</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

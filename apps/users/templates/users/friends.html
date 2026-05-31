@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Znajomi{% endblock %}
+
+{% block navbar_title %}
+  <i class="bi bi-people-fill text-muted me-2"></i>
+  <span class="fw-semibold">Znajomi</span>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width:760px">
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Incoming requests -->
+  {% if incoming %}
+    <div class="mb-4">
+      <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:.75rem">
+        <i class="bi bi-envelope-fill me-1 text-primary"></i>Oczekujące zaproszenia
+        <span class="badge bg-primary ms-1">{{ incoming|length }}</span>
+      </h6>
+      <div class="list-group list-group-flush gap-2">
+        {% for fr in incoming %}
+          <div class="list-group-item bg-dark border border-primary rounded d-flex align-items-center gap-3 px-3 py-2">
+            <img src="{{ fr.from_user.profile.get_avatar_url }}" class="rounded-circle flex-shrink-0"
+                 width="40" height="40" style="object-fit:cover" />
+            <div class="flex-grow-1 overflow-hidden">
+              <a href="{% url 'users:profile' fr.from_user.username %}"
+                 class="fw-semibold text-white text-decoration-none small">{{ fr.from_user.username }}</a>
+              <div class="text-muted" style="font-size:.7rem">{{ fr.created_at|date:"d.m.Y H:i" }}</div>
+            </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+              <form method="post" action="{% url 'users:respond_friend_request' fr.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="accept" />
+                <button type="submit" class="btn btn-sm btn-success" title="Akceptuj">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              </form>
+              <form method="post" action="{% url 'users:respond_friend_request' fr.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reject" />
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Odrzuć">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Sent requests -->
+  {% if sent %}
+    <div class="mb-4">
+      <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:.75rem">
+        <i class="bi bi-send me-1"></i>Wysłane zaproszenia
+      </h6>
+      <div class="list-group list-group-flush gap-2">
+        {% for fr in sent %}
+          <div class="list-group-item bg-dark border border-secondary rounded d-flex align-items-center gap-3 px-3 py-2">
+            <img src="{{ fr.to_user.profile.get_avatar_url }}" class="rounded-circle flex-shrink-0"
+                 width="40" height="40" style="object-fit:cover" />
+            <div class="flex-grow-1 overflow-hidden">
+              <a href="{% url 'users:profile' fr.to_user.username %}"
+                 class="fw-semibold text-white text-decoration-none small">{{ fr.to_user.username }}</a>
+              <div class="text-muted" style="font-size:.7rem">Wysłane {{ fr.created_at|date:"d.m.Y H:i" }}</div>
+            </div>
+            <span class="badge bg-secondary">Oczekuje</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Friends list -->
+  <div>
+    <h6 class="text-uppercase text-muted fw-bold mb-2" style="font-size:.75rem">
+      <i class="bi bi-people-fill me-1"></i>Znajomi
+      <span class="badge bg-secondary ms-1">{{ friends|length }}</span>
+    </h6>
+    {% if friends %}
+      <div class="list-group list-group-flush gap-2">
+        {% for friend in friends %}
+          <div class="list-group-item bg-dark border border-secondary rounded d-flex align-items-center gap-3 px-3 py-2">
+            <img src="{{ friend.profile.get_avatar_url }}" class="rounded-circle flex-shrink-0
+                        {% if friend.is_online %}border border-success{% endif %}"
+                 width="40" height="40" style="object-fit:cover" />
+            <div class="flex-grow-1 overflow-hidden">
+              <a href="{% url 'users:profile' friend.username %}"
+                 class="fw-semibold text-white text-decoration-none small">{{ friend.username }}</a>
+              <div class="text-muted" style="font-size:.7rem">
+                {% if friend.is_online %}
+                  <span class="text-success">● Online</span>
+                {% else %}
+                  ● Offline
+                {% endif %}
+              </div>
+            </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+              <a href="{% url 'chat:dm_conversation' friend.username %}" class="btn btn-sm btn-outline-primary" title="Wyślij DM">
+                <i class="bi bi-chat-dots"></i>
+              </a>
+              <form method="post" action="{% url 'users:remove_friend' friend.username %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Usuń ze znajomych"
+                        onclick="return confirm('Czy na pewno chcesz usunąć {{ friend.username }} ze znajomych?')">
+                  <i class="bi bi-person-dash"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="bi bi-people fs-1 d-block mb-2 opacity-25"></i>
+        <p class="mb-1">Brak znajomych.</p>
+        <small>Wejdź na profil użytkownika i kliknij <strong>Dodaj do znajomych</strong>.</small>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

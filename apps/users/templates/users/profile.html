@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }}{% endblock %}
+
+{% block content %}
+<div class="p-4">
+  <div class="d-flex align-items-center gap-4 mb-4">
+    <img src="{{ profile_user.profile.get_avatar_url }}" class="rounded-circle"
+         width="80" height="80" style="object-fit:cover" />
+    <div>
+      <h4 class="mb-0 fw-bold">{{ profile_user.username }}</h4>
+      <span class="badge bg-{% if profile_user.role == 'admin' %}danger{% elif profile_user.role == 'moderator' %}warning{% else %}secondary{% endif %}">
+        {{ profile_user.get_role_display }}
+      </span>
+      {% if profile_user.is_online %}
+        <span class="badge bg-success ms-1">Online</span>
+      {% endif %}
+    </div>
+    {% if request.user == profile_user %}
+      <a href="{% url 'users:edit_profile' %}" class="btn btn-sm btn-outline-secondary ms-auto">
+        <i class="bi bi-pencil me-1"></i>Edytuj profil
+      </a>
+    {% else %}
+      <div class="ms-auto d-flex gap-2 flex-wrap">
+        <a href="{% url 'chat:dm_conversation' profile_user.username %}" class="btn btn-sm btn-primary">
+          <i class="bi bi-chat-dots me-1"></i>Wyślij DM
+        </a>
+
+        {% if friend_status == 'friends' %}
+          <form method="post" action="{% url 'users:remove_friend' profile_user.username %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-secondary"
+                    onclick="return confirm('Usunąć {{ profile_user.username }} ze znajomych?')">
+              <i class="bi bi-person-check-fill text-success me-1"></i>Znajomy
+            </button>
+          </form>
+        {% elif friend_status == 'sent' %}
+          <button class="btn btn-sm btn-outline-secondary" disabled>
+            <i class="bi bi-clock me-1"></i>Zaproszenie wysłane
+          </button>
+        {% elif friend_status == 'received' %}
+          <form method="post" action="{% url 'users:respond_friend_request' pending_req.id %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="accept" />
+            <button type="submit" class="btn btn-sm btn-success">
+              <i class="bi bi-check-lg me-1"></i>Zaakceptuj
+            </button>
+          </form>
+          <form method="post" action="{% url 'users:respond_friend_request' pending_req.id %}" class="d-inline">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject" />
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-x-lg me-1"></i>Odrzuć
+            </button>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'users:send_friend_request' profile_user.username %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-person-plus me-1"></i>Dodaj do znajomych
+            </button>
+          </form>
+        {% endif %}
+
+        <form method="post" action="{% url 'moderation:block_user' profile_user.username %}">
+          {% csrf_token %}
+          <button class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-slash-circle me-1"></i>Zablokuj
+          </button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if profile_user.profile.bio %}
+    <div class="card bg-secondary-subtle border-0 p-3 rounded-3">
+      <p class="mb-0">{{ profile_user.profile.bio }}</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

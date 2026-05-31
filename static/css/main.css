@@ -1,0 +1,142 @@
+/* ===== Discord-inspired Dark Theme ===== */
+:root {
+  --dc-bg-primary: #313338;
+  --dc-bg-secondary: #2b2d31;
+  --dc-bg-tertiary: #1e1f22;
+  --dc-sidebar-width: 240px;
+  --dc-userlist-width: 220px;
+  --dc-navbar-height: 48px;
+  --dc-accent: #5865f2;
+  --dc-text: #dbdee1;
+  --dc-text-muted: #949ba4;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: var(--dc-bg-primary);
+  color: var(--dc-text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ===== App layout ===== */
+.app-container {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ===== Sidebar ===== */
+.sidebar {
+  width: var(--dc-sidebar-width);
+  min-width: var(--dc-sidebar-width);
+  background-color: var(--dc-bg-secondary);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar-logo { background-color: var(--dc-bg-tertiary); }
+
+.sidebar-server {
+  color: var(--dc-text-muted);
+  transition: background .1s, color .1s;
+  cursor: pointer;
+}
+.sidebar-server:hover,
+.sidebar-server.active {
+  background: rgba(255,255,255,.07);
+  color: var(--dc-text);
+}
+.sidebar-server.active .sidebar-chevron,
+.sidebar-server[aria-expanded="true"] .sidebar-chevron {
+  transform: rotate(0deg);
+}
+.sidebar-chevron {
+  transform: rotate(-90deg);
+  transition: transform .15s;
+}
+
+.sidebar-channel {
+  color: var(--dc-text-muted);
+  transition: background .1s, color .1s;
+}
+.sidebar-channel:hover,
+.sidebar-channel.active {
+  background: rgba(255,255,255,.07);
+  color: var(--dc-text);
+}
+
+.sidebar-user { background-color: var(--dc-bg-tertiary); }
+
+/* ===== Navbar ===== */
+.navbar-top {
+  height: var(--dc-navbar-height);
+  background-color: var(--dc-bg-primary);
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
+}
+
+/* ===== Main content ===== */
+.main-content {
+  background-color: var(--dc-bg-primary);
+  height: 100vh;
+  min-width: 0;
+}
+
+.content-area { background-color: var(--dc-bg-primary); }
+
+/* ===== Chat layout ===== */
+.chat-layout { height: calc(100vh - var(--dc-navbar-height)); }
+
+.messages-container { padding-bottom: 1rem; }
+
+.message { padding: .25rem .5rem; border-radius: .375rem; }
+.message:hover { background: rgba(255,255,255,.03); }
+
+/* ===== Message input ===== */
+.message-input-bar { background-color: var(--dc-bg-primary); }
+.message-input-bar .form-control { color: var(--dc-text); }
+.message-input-bar .form-control::placeholder { color: var(--dc-text-muted); }
+
+/* ===== Right user list ===== */
+.user-list-panel {
+  width: var(--dc-userlist-width);
+  min-width: var(--dc-userlist-width);
+  background-color: var(--dc-bg-secondary);
+  height: 100vh;
+}
+
+/* ===== Auth pages ===== */
+.auth-wrapper { background: var(--dc-bg-tertiary); }
+.auth-card {
+  background: var(--dc-bg-secondary);
+  color: var(--dc-text);
+}
+
+/* ===== Reactions ===== */
+.reaction-btn {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.1);
+  font-size: .85rem;
+  padding: 1px 6px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.reaction-btn:hover { background: rgba(255,255,255,.15); }
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.25); }
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .sidebar { width: 60px; min-width: 60px; }
+  .sidebar .sidebar-channel span,
+  .sidebar-user .flex-grow-1,
+  .sidebar .small { display: none; }
+  .user-list-panel { display: none !important; }
+}

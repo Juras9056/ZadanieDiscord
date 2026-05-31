@@ -1,0 +1,212 @@
+{% load static %}
+<div class="sidebar d-flex flex-column" id="sidebar">
+
+  <!-- Logo -->
+  <div class="sidebar-logo p-3 text-center border-bottom border-secondary">
+    <a href="{% url 'chat:channel_list' %}" class="text-decoration-none" title="Odkryj serwery">
+      <img src="{% static 'img/logo.svg' %}" alt="Logo" width="36" height="36" />
+    </a>
+  </div>
+
+  <!-- Server list + sub-channels -->
+  <div class="sidebar-section flex-grow-1 overflow-auto p-2">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center px-1 mb-2">
+      <small class="text-muted text-uppercase fw-bold" style="font-size:.65rem">Twoje serwery</small>
+      <button class="btn btn-sm btn-link text-muted p-0"
+              data-bs-toggle="modal" data-bs-target="#createChannelModal"
+              title="Utwórz serwer">
+        <i class="bi bi-plus-lg"></i>
+      </button>
+    </div>
+
+    {% for srv in my_servers %}
+      {# Server header — clickable, collapses sub-channels #}
+      <div class="mb-1">
+        <a class="sidebar-server d-flex align-items-center justify-content-between px-2 py-1 rounded text-decoration-none
+                  {% if active_server.id == srv.id %}active{% endif %}"
+           href="{% url 'chat:server_detail' srv.id %}"
+           data-bs-toggle="collapse"
+           data-bs-target="#srv-{{ srv.id }}"
+           aria-expanded="{% if active_server.id == srv.id %}true{% else %}false{% endif %}">
+          <span class="small fw-semibold text-truncate">
+            {% if srv.channel_type == 'private' %}<i class="bi bi-lock-fill me-1 text-warning" style="font-size:.65rem"></i>{% endif %}
+            {{ srv.name }}
+          </span>
+          <i class="bi bi-chevron-down sidebar-chevron text-muted" style="font-size:.6rem"></i>
+        </a>
+
+        {# Sub-channels collapse #}
+        <div id="srv-{{ srv.id }}" class="collapse {% if active_server.id == srv.id %}show{% endif %} ps-2 mt-1">
+
+          {# Text sub-channels #}
+          {% with text_subs=srv.sub_channels.all %}
+            {% if text_subs %}
+              <div class="mb-1">
+                <small class="text-muted px-2" style="font-size:.6rem;text-transform:uppercase;font-weight:600">Tekstowe</small>
+                {% for sub in text_subs %}
+                  {% if sub.sub_type == 'text' %}
+                    <a href="{% url 'chat:channel_detail' sub.id %}"
+                       class="sidebar-channel d-flex align-items-center px-2 py-1 rounded text-decoration-none
+                              {% if active_channel.id == sub.id %}active{% endif %}">
+                      <i class="bi bi-hash me-2 text-muted" style="font-size:.75rem"></i>
+                      <span class="small">{{ sub.name }}</span>
+                    </a>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            {# Voice sub-channels #}
+            {% for sub in text_subs %}{% if sub.sub_type == 'voice' %}{% with _found=1 %}{% endwith %}{% endif %}{% endfor %}
+            <div class="mb-1">
+              <small class="text-muted px-2" style="font-size:.6rem;text-transform:uppercase;font-weight:600">Głosowe</small>
+              {% for sub in text_subs %}
+                {% if sub.sub_type == 'voice' %}
+                  <a href="{% url 'chat:voice_channel' sub.id %}"
+                     class="sidebar-channel d-flex align-items-center px-2 py-1 rounded text-decoration-none
+                            {% if active_channel.id == sub.id %}active{% endif %}">
+                    <i class="bi bi-volume-up-fill me-2 text-muted" style="font-size:.75rem"></i>
+                    <span class="small">{{ sub.name }}</span>
+                  </a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endwith %}
+
+          {# Add sub-channel (only for server admin) #}
+          {% if srv.my_is_mod %}
+            {% if srv.my_role == 'admin' %}
+              <button class="btn btn-link btn-sm text-muted p-0 px-2 py-1 w-100 text-start"
+                      style="font-size:.7rem"
+                      data-bs-toggle="modal"
+                      data-bs-target="#addSubModal-{{ srv.id }}">
+                <i class="bi bi-plus me-1"></i>Dodaj podkanał
+              </button>
+            {% endif %}
+            <a href="{% url 'chat:manage_members' srv.id %}"
+               class="btn btn-link btn-sm text-muted p-0 px-2 py-1 w-100 text-start"
+               style="font-size:.7rem">
+              <i class="bi bi-people me-1"></i>Zarządzaj członkami
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-muted small px-2 mt-2">Nie jesteś jeszcze w żadnym serwerze.<br>
+        <a href="{% url 'chat:channel_list' %}" class="text-primary">Odkryj serwery</a>
+      </p>
+    {% endfor %}
+  </div>
+
+  <!-- User Info -->
+  <div class="sidebar-user border-top border-secondary p-2 d-flex align-items-center gap-2">
+    <img src="{{ request.user.profile.get_avatar_url }}" alt="avatar"
+         class="rounded-circle {% if request.user.is_online %}border border-success{% endif %}"
+         width="32" height="32" style="object-fit:cover" />
+    <div class="flex-grow-1 overflow-hidden">
+      <div class="small fw-semibold text-truncate">{{ request.user.username }}</div>
+      <div class="text-muted" style="font-size:.7rem">
+        {% if request.user.is_online %}<span class="text-success">● Online</span>{% else %}<span>● Offline</span>{% endif %}
+      </div>
+    </div>
+    <a href="{% url 'users:edit_profile' %}" class="text-muted" title="Ustawienia">
+      <i class="bi bi-gear"></i>
+    </a>
+  </div>
+</div>
+
+<!-- ─── Modal: Utwórz serwer ─── -->
+<div class="modal fade" id="createChannelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title"><i class="bi bi-server me-2"></i>Nowy serwer</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'chat:create_channel' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          {% for field in channel_form %}
+            <div class="mb-3 {% if field.html_name == 'password_raw' %}d-none{% endif %}"
+                 {% if field.html_name == 'password_raw' %}id="passwordField"{% endif %}>
+              <label class="form-label small">{{ field.label }}</label>
+              {{ field }}
+              {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+          <button type="submit" class="btn btn-primary">Utwórz</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  (function () {
+    const modal = document.getElementById('createChannelModal');
+    if (!modal) return;
+    modal.addEventListener('show.bs.modal', function () {
+      const typeSelect = modal.querySelector('#id_channel_type');
+      const pwField = modal.querySelector('#passwordField');
+      if (!typeSelect || !pwField) return;
+      function toggle() {
+        const isPrivate = typeSelect.value === 'private';
+        pwField.classList.toggle('d-none', !isPrivate);
+        pwField.querySelector('input').required = isPrivate;
+      }
+      toggle();
+      typeSelect.addEventListener('change', toggle);
+    });
+  })();
+</script>
+
+<!-- ─── Modals: Dodaj podkanał (per server) ─── -->
+{% for srv in my_servers %}
+  {% if request.user == srv.created_by or request.user.is_staff %}
+    <div class="modal fade" id="addSubModal-{{ srv.id }}" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content bg-dark border-secondary">
+          <div class="modal-header border-secondary">
+            <h5 class="modal-title">Nowy podkanał w #{{ srv.name }}</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <form method="post" action="{% url 'chat:create_sub_channel' srv.id %}">
+            {% csrf_token %}
+            <div class="modal-body">
+              {% if sub_form %}
+                {% for field in sub_form %}
+                  <div class="mb-3">
+                    <label class="form-label small">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="mb-3">
+                  <label class="form-label small">Nazwa</label>
+                  <input type="text" name="name" class="form-control" placeholder="ogolny" required />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small">Typ</label>
+                  <select name="sub_type" class="form-select">
+                    <option value="text">Tekstowy</option>
+                    <option value="voice">Głosowy</option>
+                  </select>
+                </div>
+              {% endif %}
+            </div>
+            <div class="modal-footer border-secondary">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+              <button type="submit" class="btn btn-primary">Dodaj podkanał</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endfor %}
+
