@@ -10,8 +10,11 @@ RUN pip install --no-cache-dir -r requirements-dev.txt -r requirements.txt
 
 COPY . .
 
+ENV DJANGO_SETTINGS_MODULE=config.settings.development
+ENV SECRET_KEY=build-only-key
+
+RUN python manage.py collectstatic --noinput
+
 EXPOSE 8000
 
-ENV DJANGO_SETTINGS_MODULE=config.settings.development
-
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"]
