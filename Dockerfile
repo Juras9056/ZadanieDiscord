@@ -5,8 +5,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements-dev.txt .
-RUN pip install --no-cache-dir -r requirements-dev.txt
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt -r requirements.txt
 
 COPY . .
 
